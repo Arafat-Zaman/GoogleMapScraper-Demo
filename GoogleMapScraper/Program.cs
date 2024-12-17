@@ -43,7 +43,9 @@ class Program
         {
             connection.Open();
 
-            string selectQuery = "SELECT LocationID, URL FROM tbl_GoogleMAP WHERE OverallRating IS NULL OR ReviewCount IS NULL";
+            //string selectQuery = "SELECT LocationID, URL FROM tbl_GoogleMAPTBK WHERE OverallRating IS NULL OR ReviewCount IS NULL";
+            string selectQuery = "SELECT LocationID, URL FROM tbl_GoogleMAPTBK";
+
             SqlCommand command = new SqlCommand(selectQuery, connection);
 
             using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection))
@@ -66,14 +68,51 @@ class Program
                         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
                         // Extract Review Count
+                        //var reviewCountElement = page.Locator("button.HHrUdb span");
+                        //string reviewCountText = await reviewCountElement.InnerTextAsync();
+                        //int reviewCount = int.TryParse(reviewCountText.Split(' ')[0], out var parsedCount) ? parsedCount : 0;
+
+                        //// Extract Overall Rating
+                        //var overallRatingElement = page.Locator("css=.YTkVxc[role='img']");
+                        //string ratingText = await overallRatingElement.GetAttributeAsync("aria-label");
+                        ////float overallRating = float.TryParse(ratingText?.Split(' ')[0], out var parsedRating) ? parsedRating : 0.0f;
+                        //double overallRating = double.TryParse(ratingText?.Split(' ')[0], out var parsedRating)
+                        //? Math.Round(parsedRating, 2)
+                        //: 0.0;
+
+                        // Extract Review Count
+                        //var reviewCountElement = page.Locator("button.HHrUdb span");
+                        //string reviewCountText = await reviewCountElement?.InnerTextAsync() ?? "0"; // Default to "0" if null
+                        //int reviewCount = int.TryParse(reviewCountText.Split(' ')[0], out var parsedCount) ? parsedCount : 0;
+
+                        //// Extract Overall Rating
+                        //var overallRatingElement = page.Locator("css=.YTkVxc[role='img']");
+                        //string ratingText = await overallRatingElement?.GetAttributeAsync("aria-label") ?? "0.0"; // Default to "0.0" if null
+                        //double overallRating = double.TryParse(ratingText.Split(' ')[0], out var parsedRating)
+                        //    ? Math.Round(parsedRating, 2)
+                        //    : 0.0;
+
+                        // Extract Review Count
                         var reviewCountElement = page.Locator("button.HHrUdb span");
-                        string reviewCountText = await reviewCountElement.InnerTextAsync();
+                        string reviewCountText = "0"; // Default value
+                        if (await reviewCountElement.CountAsync() > 0) // Check if the locator exists
+                        {
+                            reviewCountText = await reviewCountElement.InnerTextAsync();
+                        }
                         int reviewCount = int.TryParse(reviewCountText.Split(' ')[0], out var parsedCount) ? parsedCount : 0;
 
                         // Extract Overall Rating
                         var overallRatingElement = page.Locator("css=.YTkVxc[role='img']");
-                        string ratingText = await overallRatingElement.GetAttributeAsync("aria-label");
-                        float overallRating = float.TryParse(ratingText?.Split(' ')[0], out var parsedRating) ? parsedRating : 0.0f;
+                        string ratingText = "0.0"; // Default value
+                        if (await overallRatingElement.CountAsync() > 0) // Check if the locator exists
+                        {
+                            ratingText = await overallRatingElement.GetAttributeAsync("aria-label");
+                        }
+                        double overallRating = double.TryParse(ratingText?.Split(' ')[0], out var parsedRating)
+                            ? Math.Round(parsedRating, 2)
+                            : 0.0;
+
+
 
                         Console.WriteLine($"LocationID: {locationId}, Rating: {overallRating}, Reviews: {reviewCount}");
 
@@ -95,10 +134,10 @@ class Program
         Console.WriteLine("Scraping completed!");
     }
 
-    static void UpdateDatabase(SqlConnection connection, string locationId, float rating, int reviews)
+    static void UpdateDatabase(SqlConnection connection, string locationId, double rating, int reviews)
     {
         string updateQuery = @"
-            UPDATE tbl_GoogleMAP
+            UPDATE tbl_GoogleMAPTBK
             SET OverallRating = @OverallRating, ReviewCount = @ReviewCount
             WHERE LocationID = @LocationID";
 

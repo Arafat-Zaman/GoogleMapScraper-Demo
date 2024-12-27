@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
+using System.Globalization;
 
 class Program
 {
@@ -93,13 +94,30 @@ class Program
                         //    : 0.0;
 
                         // Extract Review Count
+                        //var reviewCountElement = page.Locator("button.HHrUdb span");
+                        //string reviewCountText = "0"; // Default value
+                        //if (await reviewCountElement.CountAsync() > 0) // Check if the locator exists
+                        //{
+                        //    reviewCountText = await reviewCountElement.InnerTextAsync();
+                        //}
+                        //int reviewCount = int.TryParse(reviewCountText.Split(' ')[0], out var parsedCount) ? parsedCount : 0;
+
+                        // Extract Review Count
                         var reviewCountElement = page.Locator("button.HHrUdb span");
                         string reviewCountText = "0"; // Default value
+
                         if (await reviewCountElement.CountAsync() > 0) // Check if the locator exists
                         {
                             reviewCountText = await reviewCountElement.InnerTextAsync();
                         }
-                        int reviewCount = int.TryParse(reviewCountText.Split(' ')[0], out var parsedCount) ? parsedCount : 0;
+
+                        // Remove any additional formatting and parse the number, allowing for thousands separators
+                        int reviewCount = int.TryParse(
+                            reviewCountText.Split(' ')[0], // Extract the first part of the text
+                            NumberStyles.AllowThousands,  // Allow numbers with thousand separators
+                            CultureInfo.InvariantCulture, // Use invariant culture for consistent parsing
+                            out var parsedCount
+                        ) ? parsedCount : 0;
 
                         // Extract Overall Rating
                         var overallRatingElement = page.Locator("css=.YTkVxc[role='img']");
@@ -109,7 +127,7 @@ class Program
                             ratingText = await overallRatingElement.GetAttributeAsync("aria-label");
                         }
                         double overallRating = double.TryParse(ratingText?.Split(' ')[0], out var parsedRating)
-                            ? Math.Round(parsedRating, 2)
+                            ? Math.Round(parsedRating, 3)
                             : 0.0;
 
 
